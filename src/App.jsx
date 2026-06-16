@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Text, Sparkles, OrbitControls, Html } from '@react-three/drei';
 import './App.css'; 
@@ -274,92 +274,95 @@ const BirthdayScene = ({ candleLit, setCandleLit }) => {
         <directionalLight position={[-5, 5, 5]} intensity={candleLit ? 1.2 : 0.5} color="#ffffff" />
         <directionalLight position={[5, -2, 2]} intensity={0.6} color="#ffd1dc" />
 
-        <ConfettiRain count={75} />
+        {/* Suspense forces meshes to cleanly calculate vertices before mounting */}
+        <Suspense fallback={null}>
+          <ConfettiRain count={75} />
 
-        <SceneFitter>
-          
-          <Balloon position={[-2.2, 0.5, -1.0]} color="#ff69b4" speedOffset={0} />
-          <Balloon position={[-2.6, 0.9, -0.5]} color="#00ffcc" speedOffset={2.5} />
-          <Balloon position={[2.2, 0.5, -1.0]} color="#fff34f" speedOffset={4.2} />
-          <Balloon position={[2.6, 0.9, -0.5]} color="#ffaa00" speedOffset={1.1} />
-
-          {!candleLit && <AnimatedWishText />}
-
-          {/* === THE CAKE GROUP === */}
-          <group position={[0, -0.4, 0]}>
-            <mesh position={[0, 0.3, 0]}>
-              <cylinderGeometry args={[1.4, 1.4, 0.6, 64]} />
-              <meshStandardMaterial color="#ffb6c1" roughness={0.4} /> 
-            </mesh>
-
-            {dotsArray.map((_, i) => {
-              const angle = (i * 2 * Math.PI) / totalDots;
-              return (
-                <mesh key={`b-dot-${i}`} position={[Math.cos(angle) * 1.42, 0.58, Math.sin(angle) * 1.42]}>
-                  <sphereGeometry args={[0.04, 16, 16]} />
-                  <meshStandardMaterial color="#ffffff" roughness={0.1} />
-                </mesh>
-              );
-            })}
-
-            <Flower position={[1.1, 0.4, 0.8]} rotation={[0, Math.PI / 4, 0]} scale={0.14} />
-            <Flower position={[-1.1, 0.4, 0.8]} rotation={[0, -Math.PI / 4, 0]} scale={0.14} />
-            <Flower position={[0, 0.4, -1.3]} rotation={[0, Math.PI, 0]} scale={0.14} />
-
-            <mesh position={[0, 0.85, 0]}>
-              <cylinderGeometry args={[0.9, 0.9, 0.5, 64]} />
-              <meshStandardMaterial color="#fffdfa" roughness={0.4} />
-            </mesh>
-
-            {dotsArray.map((_, i) => {
-              const angle = (i * 2 * Math.PI) / totalDots;
-              return (
-                <mesh key={`t-dot-${i}`} position={[Math.cos(angle) * 0.92, 1.08, Math.sin(angle) * 0.92]}>
-                  <sphereGeometry args={[0.035, 16, 16]} />
-                  <meshStandardMaterial color="#ffecf2" roughness={0.1} />
-                </mesh>
-              );
-            })}
-
-            <Flower position={[0.5, 1.12, 0.4]} rotation={[-Math.PI / 2, 0, 0]} scale={0.15} />
-            <Flower position={[-0.5, 1.12, -0.3]} rotation={[-Math.PI / 2, 0, 0]} scale={0.15} />
-            <Flower position={[0.2, 1.12, -0.5]} rotation={[-Math.PI / 2, 0, 0]} scale={0.12} />
-
-            <RisingCandle candleLit={candleLit} setCandleLit={setCandleLit} />
-          </group>
-
-          {/* === THE CARD WITH DECRYPTED TEXT EFFECT === */}
-          <group position={[0, -1.3, 2.3]} rotation={[-Math.PI / 11, 0, 0]}>
-            <mesh>
-              <planeGeometry args={[4.6, 2.4]} />
-              <meshStandardMaterial color="#ffffff" roughness={1} />
-            </mesh>
+          <SceneFitter>
             
-            <Text position={[0, 0.6, 0.02]} fontSize={0.32} color="#d81b60" fontWeight="bold" anchorX="center">
-              Happy Birthday, Ash! 🎉
-            </Text>
-            
-            <Html
-              position={[0, -0.2, 0.05]} 
-              transform                  
-              occlude                    
-              distanceFactor={3.2}       
-              style={{ width: '450px', textAlign: 'center', pointerEvents: 'none', userSelect: 'none' }}
-            >
-              <div className="card-custom-text-layer">
-                <DecryptedText
-                  text="You bring so much joy and positive energy everywhere you go, and having you around always makes the day ten times better. You are an absolutely awesome and incredible person. I hope your special day is packed with fun, happiness, and everything you've been wishing for! Cheers to you!"
-                  animateOn="view"
-                  revealDirection="start"
-                  sequential
-                  speed={40}
-                  useOriginalCharsOnly={false}
-                />
-              </div>
-            </Html>
-          </group>
+            <Balloon position={[-2.2, 0.5, -1.0]} color="#ff69b4" speedOffset={0} />
+            <Balloon position={[-2.6, 0.9, -0.5]} color="#00ffcc" speedOffset={2.5} />
+            <Balloon position={[2.2, 0.5, -1.0]} color="#fff34f" speedOffset={4.2} />
+            <Balloon position={[2.6, 0.9, -0.5]} color="#ffaa00" speedOffset={1.1} />
 
-        </SceneFitter>
+            {!candleLit && <AnimatedWishText />}
+
+            {/* === THE CAKE GROUP === */}
+            <group position={[0, -0.4, 0]}>
+              <mesh position={[0, 0.3, 0]}>
+                <cylinderGeometry args={[1.4, 1.4, 0.6, 64]} />
+                <meshStandardMaterial color="#ffb6c1" roughness={0.4} /> 
+              </mesh>
+
+              {dotsArray.map((_, i) => {
+                const angle = (i * 2 * Math.PI) / totalDots;
+                return (
+                  <mesh key={`b-dot-${i}`} position={[Math.cos(angle) * 1.42, 0.58, Math.sin(angle) * 1.42]}>
+                    <sphereGeometry args={[0.04, 16, 16]} />
+                    <meshStandardMaterial color="#ffffff" roughness={0.1} />
+                  </mesh>
+                );
+              })}
+
+              <Flower position={[1.1, 0.4, 0.8]} rotation={[0, Math.PI / 4, 0]} scale={0.14} />
+              <Flower position={[-1.1, 0.4, 0.8]} rotation={[0, -Math.PI / 4, 0]} scale={0.14} />
+              <Flower position={[0, 0.4, -1.3]} rotation={[0, Math.PI, 0]} scale={0.14} />
+
+              <mesh position={[0, 0.85, 0]}>
+                <cylinderGeometry args={[0.9, 0.9, 0.5, 64]} />
+                <meshStandardMaterial color="#fffdfa" roughness={0.4} />
+              </mesh>
+
+              {dotsArray.map((_, i) => {
+                const angle = (i * 2 * Math.PI) / totalDots;
+                return (
+                  <mesh key={`t-dot-${i}`} position={[Math.cos(angle) * 0.92, 1.08, Math.sin(angle) * 0.92]}>
+                    <sphereGeometry args={[0.035, 16, 16]} />
+                    <meshStandardMaterial color="#ffecf2" roughness={0.1} />
+                  </mesh>
+                );
+              })}
+
+              <Flower position={[0.5, 1.12, 0.4]} rotation={[-Math.PI / 2, 0, 0]} scale={0.15} />
+              <Flower position={[-0.5, 1.12, -0.3]} rotation={[-Math.PI / 2, 0, 0]} scale={0.15} />
+              <Flower position={[0.2, 1.12, -0.5]} rotation={[-Math.PI / 2, 0, 0]} scale={0.12} />
+
+              <RisingCandle candleLit={candleLit} setCandleLit={setCandleLit} />
+            </group>
+
+            {/* === THE CARD WITH DECRYPTED TEXT EFFECT === */}
+            <group position={[0, -1.3, 2.3]} rotation={[-Math.PI / 11, 0, 0]}>
+              <mesh>
+                <planeGeometry args={[4.6, 2.4]} />
+                <meshStandardMaterial color="#ffffff" roughness={1} />
+              </mesh>
+              
+              <Text position={[0, 0.6, 0.02]} fontSize={0.32} color="#d81b60" fontWeight="bold" anchorX="center">
+                Happy Birthday, Ash! 🎉
+              </Text>
+              
+              <Html
+                position={[0, -0.2, 0.05]} 
+                transform                  
+                occlude                    
+                distanceFactor={3.2}       
+                style={{ width: '450px', textAlign: 'center', pointerEvents: 'none', userSelect: 'none' }}
+              >
+                <div className="card-custom-text-layer">
+                  <DecryptedText
+                    text="You bring so much joy and positive energy everywhere you go, and having you around always makes the day ten times better. You are an absolutely awesome and incredible person. I hope your special day is packed with fun, happiness, and everything you've been wishing for! Cheers to you!"
+                    animateOn="view"
+                    revealDirection="start"
+                    sequential
+                    speed={40}
+                    useOriginalCharsOnly={false}
+                  />
+                </div>
+              </Html>
+            </group>
+
+          </SceneFitter>
+        </Suspense>
       </Canvas>
     </div>
   );
@@ -372,7 +375,7 @@ export default function App() {
   const [candleLit, setCandleLit] = useState(true);
   const audioRef = useRef(null);
 
-  // Background window listener handles implicit browser rules
+  // Unlocks audio contexts via background page event tracking 
   useEffect(() => {
     const handleUserInteraction = () => {
       if (audioRef.current) {
@@ -396,12 +399,13 @@ export default function App() {
 
   const handleTransition = () => {
     setIsFading(true);
+    // 750ms buffer layout delay stabilizes rendering and prevents race conditions
     setTimeout(() => {
       setShow3D(true);
       if (audioRef.current) {
         audioRef.current.play().catch(() => {});
       }
-    }, 400);
+    }, 750);
   };
 
   return (
@@ -415,17 +419,24 @@ export default function App() {
         </div>
       )}
 
-      {/* Visible media dock at bottom of the body viewport layout */}
-      <div className="audio-player-dock">
-        <span className="audio-hint">🎵 Press any key, tap screen, or play manually:</span>
-        <audio 
-          ref={audioRef} 
-          src="/cold.mp3" 
-          controls 
-          loop 
-          preload="auto"
-        />
-      </div>
+      {/* Renders visual player widget ONLY when terminal screen is done */}
+      {show3D && (
+        <div className="audio-player-dock">
+          <span className="audio-hint">🎵 Press any key, tap screen, or play manually:</span>
+          <audio 
+            ref={audioRef} 
+            src="/cold.mp3" 
+            controls 
+            loop 
+            preload="auto"
+          />
+        </div>
+      )}
+
+      {/* Invisible listener node safely tracks context tokens during CLI animation */}
+      {!show3D && (
+        <audio ref={audioRef} src="/cold.mp3" loop preload="auto" style={{ display: 'none' }} />
+      )}
     </div>
   );
 }
