@@ -264,7 +264,7 @@ const BirthdayScene = ({ candleLit, setCandleLit }) => {
 
       <Canvas 
         camera={{ position: [0, 2.4, 6.6], fov: 50 }} 
-        style={{ height: '100vh', width: '100vw' }}
+        style={{ height: '100vh', width: '100vw', background: 'transparent' }} 
         gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
       >
         <OrbitControls autoRotate={candleLit} autoRotateSpeed={0.3} maxPolarAngle={Math.PI / 2.1} />
@@ -372,28 +372,41 @@ export default function App() {
   const [candleLit, setCandleLit] = useState(true);
   const audioRef = useRef(null);
 
+  // Background window listener handles implicit browser rules
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      if (audioRef.current) {
+        audioRef.current.play()
+          .then(() => {
+            window.removeEventListener('keydown', handleUserInteraction);
+            window.removeEventListener('click', handleUserInteraction);
+          })
+          .catch(err => console.log("Audio waiting for player interaction context:", err));
+      }
+    };
+
+    window.addEventListener('keydown', handleUserInteraction);
+    window.addEventListener('click', handleUserInteraction);
+
+    return () => {
+      window.removeEventListener('keydown', handleUserInteraction);
+      window.removeEventListener('click', handleUserInteraction);
+    };
+  }, []);
+
   const handleTransition = () => {
     setIsFading(true);
-    // Soft buffer gives Three.js a 400ms head-start to construct vectors invisibly
     setTimeout(() => {
       setShow3D(true);
       if (audioRef.current) {
-        audioRef.current.play().catch(err => console.log("Audio waiting for user focus click:", err));
+        audioRef.current.play().catch(() => {});
       }
     }, 400);
   };
 
   return (
     <div className={`main-wrapper ${isFading ? 'fade-active' : ''}`}>
-      {/* Hidden audio player targeting public static path directory file */}
-      <audio 
-        ref={audioRef} 
-        src="/cold.mp3" 
-        loop 
-        style={{ display: 'none' }} 
-        preload="auto"
-      />
-
+      
       {!show3D ? (
         <CliScreen onComplete={handleTransition} />
       ) : (
@@ -401,6 +414,18 @@ export default function App() {
           <BirthdayScene candleLit={candleLit} setCandleLit={setCandleLit} />
         </div>
       )}
+
+      {/* Visible media dock at bottom of the body viewport layout */}
+      <div className="audio-player-dock">
+        <span className="audio-hint">🎵 Press any key, tap screen, or play manually:</span>
+        <audio 
+          ref={audioRef} 
+          src="/cold.mp3" 
+          controls 
+          loop 
+          preload="auto"
+        />
+      </div>
     </div>
   );
 }
