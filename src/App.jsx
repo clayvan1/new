@@ -250,8 +250,61 @@ const CliScreen = ({ onComplete }) => {
 
 // --- Main Party 3D Scene Component ---
 const BirthdayScene = ({ candleLit, setCandleLit }) => {
+  const [forceRender, setForceRender] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const segments = isMobile ? 24 : 64;
   const totalDots = 16;
   const dotsArray = Array.from({ length: totalDots });
+
+  // Force re-render on mobile after a delay to ensure cake renders
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setForceRender(prev => !prev);
+      setIsLoading(false);
+    }, isMobile ? 2000 : 1000);
+    
+    return () => clearTimeout(timer);
+  }, [isMobile]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div style={{ 
+        width: '100vw', 
+        height: '100vh', 
+        display: 'flex', 
+        flexDirection: 'column',
+        alignItems: 'center', 
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+        color: 'white'
+      }}>
+        <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)' }}> intializing........</h2>
+        <div style={{ 
+          marginTop: '20px',
+          width: '200px',
+          height: '4px',
+          background: '#333',
+          borderRadius: '2px',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            width: '60%',
+            height: '100%',
+            background: 'linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77)',
+            animation: 'loadingProgress 1.5s ease-in-out infinite'
+          }} />
+        </div>
+        <style>{`
+          @keyframes loadingProgress {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
@@ -265,7 +318,13 @@ const BirthdayScene = ({ candleLit, setCandleLit }) => {
       <Canvas 
         camera={{ position: [0, 2.4, 6.6], fov: 50 }} 
         style={{ height: '100vh', width: '100vw', background: 'transparent' }} 
-        gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
+        gl={{ 
+          alpha: true, 
+          antialias: !isMobile, 
+          powerPreference: "high-performance",
+          failIfMajorPerformanceCaveat: false
+        }}
+        key={forceRender ? 'canvas-force' : 'canvas'}
       >
         <OrbitControls autoRotate={candleLit} autoRotateSpeed={0.3} maxPolarAngle={Math.PI / 2.1} />
         
@@ -274,9 +333,20 @@ const BirthdayScene = ({ candleLit, setCandleLit }) => {
         <directionalLight position={[-5, 5, 5]} intensity={candleLit ? 1.2 : 0.5} color="#ffffff" />
         <directionalLight position={[5, -2, 2]} intensity={0.6} color="#ffd1dc" />
 
-        {/* Suspense forces meshes to cleanly calculate vertices before mounting */}
-        <Suspense fallback={null}>
-          <ConfettiRain count={75} />
+        <Suspense fallback={
+          <Html center>
+            <div style={{ 
+              color: 'white', 
+              fontSize: '20px',
+              background: 'rgba(0,0,0,0.7)',
+              padding: '20px',
+              borderRadius: '10px'
+            }}>
+              Loading 3D elements...
+            </div>
+          </Html>
+        }>
+          <ConfettiRain count={isMobile ? 45 : 75} />
 
           <SceneFitter>
             
@@ -288,12 +358,14 @@ const BirthdayScene = ({ candleLit, setCandleLit }) => {
             {!candleLit && <AnimatedWishText />}
 
             {/* === THE CAKE GROUP === */}
-            <group position={[0, -0.4, 0]}>
+            <group position={[0, -0.4, 0]} key={`cake-group-${forceRender}`}>
+              {/* Cake bottom layer */}
               <mesh position={[0, 0.3, 0]}>
-                <cylinderGeometry args={[1.4, 1.4, 0.6, 64]} />
-                <meshStandardMaterial color="#ffb6c1" roughness={0.4} /> 
+                <cylinderGeometry args={[1.4, 1.4, 0.6, segments]} />
+                <meshStandardMaterial color="#ffb6c1" roughness={0.4} />
               </mesh>
 
+              {/* Dots on bottom layer */}
               {dotsArray.map((_, i) => {
                 const angle = (i * 2 * Math.PI) / totalDots;
                 return (
@@ -304,15 +376,18 @@ const BirthdayScene = ({ candleLit, setCandleLit }) => {
                 );
               })}
 
+              {/* Flowers */}
               <Flower position={[1.1, 0.4, 0.8]} rotation={[0, Math.PI / 4, 0]} scale={0.14} />
               <Flower position={[-1.1, 0.4, 0.8]} rotation={[0, -Math.PI / 4, 0]} scale={0.14} />
               <Flower position={[0, 0.4, -1.3]} rotation={[0, Math.PI, 0]} scale={0.14} />
 
+              {/* Cake top layer */}
               <mesh position={[0, 0.85, 0]}>
-                <cylinderGeometry args={[0.9, 0.9, 0.5, 64]} />
+                <cylinderGeometry args={[0.9, 0.9, 0.5, segments]} />
                 <meshStandardMaterial color="#fffdfa" roughness={0.4} />
               </mesh>
 
+              {/* Dots on top layer */}
               {dotsArray.map((_, i) => {
                 const angle = (i * 2 * Math.PI) / totalDots;
                 return (
@@ -323,6 +398,7 @@ const BirthdayScene = ({ candleLit, setCandleLit }) => {
                 );
               })}
 
+              {/* Top flowers */}
               <Flower position={[0.5, 1.12, 0.4]} rotation={[-Math.PI / 2, 0, 0]} scale={0.15} />
               <Flower position={[-0.5, 1.12, -0.3]} rotation={[-Math.PI / 2, 0, 0]} scale={0.15} />
               <Flower position={[0.2, 1.12, -0.5]} rotation={[-Math.PI / 2, 0, 0]} scale={0.12} />
@@ -330,7 +406,7 @@ const BirthdayScene = ({ candleLit, setCandleLit }) => {
               <RisingCandle candleLit={candleLit} setCandleLit={setCandleLit} />
             </group>
 
-            {/* === THE CARD WITH DECRYPTED TEXT EFFECT === */}
+            {/* === THE CARD WITH DECRYPTED TEXT EFFECT - KEPT ORIGINAL TEXT === */}
             <group position={[0, -1.3, 2.3]} rotation={[-Math.PI / 11, 0, 0]}>
               <mesh>
                 <planeGeometry args={[4.6, 2.4]} />
@@ -346,9 +422,23 @@ const BirthdayScene = ({ candleLit, setCandleLit }) => {
                 transform                  
                 occlude                    
                 distanceFactor={3.2}       
-                style={{ width: '450px', textAlign: 'center', pointerEvents: 'none', userSelect: 'none' }}
+                style={{ 
+                  width: '450px', 
+                  maxWidth: '90vw',
+                  textAlign: 'center', 
+                  pointerEvents: 'none', 
+                  userSelect: 'none',
+                  overflow: 'hidden',
+                  wordWrap: 'break-word'
+                }}
               >
-                <div className="card-custom-text-layer">
+                <div className="card-custom-text-layer" style={{
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  padding: '5px',
+                  fontSize: 'clamp(12px, 1.5vw, 16px)',
+                  lineHeight: '1.5'
+                }}>
                   <DecryptedText
                     text="You bring so much joy and positive energy everywhere you go, and having you around always makes the day ten times better. You are an absolutely awesome and incredible person. I hope your special day is packed with fun, happiness, and everything you've been wishing for! Cheers to you!"
                     animateOn="view"
@@ -374,6 +464,7 @@ export default function App() {
   const [isFading, setIsFading] = useState(false);
   const [candleLit, setCandleLit] = useState(true);
   const audioRef = useRef(null);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   // Unlocks audio contexts via background page event tracking 
   useEffect(() => {
@@ -383,6 +474,7 @@ export default function App() {
           .then(() => {
             window.removeEventListener('keydown', handleUserInteraction);
             window.removeEventListener('click', handleUserInteraction);
+            window.removeEventListener('touchstart', handleUserInteraction);
           })
           .catch(err => console.log("Audio waiting for player interaction context:", err));
       }
@@ -390,22 +482,24 @@ export default function App() {
 
     window.addEventListener('keydown', handleUserInteraction);
     window.addEventListener('click', handleUserInteraction);
+    window.addEventListener('touchstart', handleUserInteraction);
 
     return () => {
       window.removeEventListener('keydown', handleUserInteraction);
       window.removeEventListener('click', handleUserInteraction);
+      window.removeEventListener('touchstart', handleUserInteraction);
     };
   }, []);
 
   const handleTransition = () => {
     setIsFading(true);
-    // 750ms buffer layout delay stabilizes rendering and prevents race conditions
+    const delay = isMobile ? 2000 : 1000;
     setTimeout(() => {
       setShow3D(true);
       if (audioRef.current) {
         audioRef.current.play().catch(() => {});
       }
-    }, 750);
+    }, delay);
   };
 
   return (
@@ -422,13 +516,14 @@ export default function App() {
       {/* Renders visual player widget ONLY when terminal screen is done */}
       {show3D && (
         <div className="audio-player-dock">
-          <span className="audio-hint">🎵 Press any key, tap screen, or play manually:</span>
+          <span className="audio-hint">🎵</span>
           <audio 
             ref={audioRef} 
             src="/cold.mp3" 
             controls 
             loop 
             preload="auto"
+            playsInline
           />
         </div>
       )}
