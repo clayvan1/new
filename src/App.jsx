@@ -3,9 +3,9 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Text, Sparkles, OrbitControls, Html } from '@react-three/drei';
 import './App.css'; 
 
-// --- Import your custom cool effect components ---
+// --- Import custom effects ---
 import DecryptedText from './DecryptedText';
-import MagicRings from './Magic Rings';
+import MagicRings from './MagicRings';
 
 // --- 3D Balloon Component (Slowly Bobs Up & Down) ---
 const Balloon = ({ position, color, speedOffset = 0 }) => {
@@ -176,12 +176,11 @@ const AnimatedWishText = () => {
   );
 };
 
-// --- REFINED: Scene Scaling/Fitting Engine Component ---
+// --- Scene Scaling/Fitting Engine Component ---
 const SceneFitter = ({ children }) => {
   const { size } = useThree();
   const aspect = size.width / size.height;
 
-  // Reduced landscape/desktop scale factor to 0.65 so everything fits neatly with plenty of breathing room
   const dynamicScale = aspect < 1.35 ? Math.max(0.44, (aspect / 1.35) * 0.95) : 0.65;
   const dynamicPosY = aspect < 1 ? -0.15 : -0.35;
 
@@ -204,7 +203,7 @@ const CliScreen = ({ onComplete }) => {
       i++;
       if (i > message.length) {
         clearInterval(typingInterval);
-        setTimeout(() => onComplete(), 1200); 
+        setTimeout(() => onComplete(), 1000); 
       }
     }, 50); 
     
@@ -264,9 +263,9 @@ const BirthdayScene = ({ candleLit, setCandleLit }) => {
       )}
 
       <Canvas 
-        camera={{ position: [0, 2.4, 6.6], fov: 50 }} /* Pushed back camera view slightly to create more natural padding around objects */
+        camera={{ position: [0, 2.4, 6.6], fov: 50 }} 
         style={{ height: '100vh', width: '100vw' }}
-        gl={{ alpha: true }}
+        gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
       >
         <OrbitControls autoRotate={candleLit} autoRotateSpeed={0.3} maxPolarAngle={Math.PI / 2.1} />
         
@@ -369,14 +368,36 @@ const BirthdayScene = ({ candleLit, setCandleLit }) => {
 // --- Main App Entry ---
 export default function App() {
   const [show3D, setShow3D] = useState(false);
+  const [isFading, setIsFading] = useState(false);
   const [candleLit, setCandleLit] = useState(true);
+  const audioRef = useRef(null);
+
+  const handleTransition = () => {
+    setIsFading(true);
+    // Soft buffer gives Three.js a 400ms head-start to construct vectors invisibly
+    setTimeout(() => {
+      setShow3D(true);
+      if (audioRef.current) {
+        audioRef.current.play().catch(err => console.log("Audio waiting for user focus click:", err));
+      }
+    }, 400);
+  };
 
   return (
-    <div className="main-wrapper">
+    <div className={`main-wrapper ${isFading ? 'fade-active' : ''}`}>
+      {/* Hidden audio player targeting public static path directory file */}
+      <audio 
+        ref={audioRef} 
+        src="/cold.mp3" 
+        loop 
+        style={{ display: 'none' }} 
+        preload="auto"
+      />
+
       {!show3D ? (
-        <CliScreen onComplete={() => setShow3D(true)} />
+        <CliScreen onComplete={handleTransition} />
       ) : (
-        <div className="scene-container">
+        <div className="scene-container global-fade-in">
           <BirthdayScene candleLit={candleLit} setCandleLit={setCandleLit} />
         </div>
       )}
